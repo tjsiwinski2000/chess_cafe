@@ -8,4 +8,5 @@ app_name='chess_game'
 urlpatterns = [
    # Home page
     path('', views.index, name='index'),
+    path("best-move/", views.best_move, name="best_move"),
 ]

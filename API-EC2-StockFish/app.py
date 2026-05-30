@@ -1,0 +1,80 @@
+# app.py
+from flask import Flask, request, jsonify
+from stockfish import Stockfish
+import os
+import functools
+
+app = Flask(__name__)
+
+STOCKFISH_PATH = os.environ.get('STOCKFISH_PATH', '/usr/games/stockfish')
+API_KEY = os.environ.get('STOCKFISH_API_KEY', 'changeme')
+
+DIFFICULTY_SETTINGS = {
+    "beginner":     {"UCI_LimitStrength": True, "UCI_Elo": 1350},
+    "intermediate": {"UCI_LimitStrength": True, "UCI_Elo": 1800},
+    "advanced":     {"UCI_LimitStrength": True, "UCI_Elo": 2200},
+    "maximum":      {"UCI_LimitStrength": False},
+}
+
+# --- Auth decorator ---
+
+def require_api_key(f):
+    @functools.wraps(f)
+    def decorated(*args, **kwargs):
+        if request.headers.get("X-API-Key") != API_KEY:
+            return jsonify({"error": "Unauthorized"}), 401
+        return f(*args, **kwargs)
+    return decorated
+
+# --- Helper ---
+
+def get_engine(difficulty="intermediate", depth=10):
+    sf = Stockfish(path=STOCKFISH_PATH, depth=depth)
+    sf.update_engine_parameters(DIFFICULTY_SETTINGS.get(difficulty, DIFFICULTY_SETTINGS["intermediate"]))
+    return sf
+
+# --- Routes ---
+
+@app.route("/health", methods=["GET"])
+def health():
+    return jsonify({"status": "ok"})
+
+@app.route("/best-move", methods=["POST"])
+@require_api_key
+def best_move():
+    data       = request.get_json()
+    fen        = data.get("fen", "")
+    difficulty = data.get("difficulty", "intermediate")
+
+    sf = get_engine(difficulty)
+
+    if not sf.is_fen_valid(fen):
+        return jsonify({"error": "Invalid FEN"}), 400
+
+    sf.set_fen_position(fen)
+    move       = sf.get_best_move()
+    evaluation = sf.get_evaluation()
+    sf.send_quit_command()
+
+    return jsonify({"best_move": move, "evaluation": evaluation})
+
+@app.route("/top-moves", methods=["POST"])
+@require_api_key
+def top_moves():
+    data  = request.get_json()
+    fen   = data.get("fen", "")
+    count = data.get("count", 3)
+
+    sf = get_engine()
+
+    if not sf.is_fen_valid(fen):
+        return jsonify({"error": "Invalid FEN"}), 400
+
+    sf.set_fen_position(fen)
+    moves = sf.get_top_moves(count)
+    sf.send_quit_command()
+
+    return jsonify({"top_moves": moves})
+
+if __name__ == "__main__":
+    app.run(debug=False)

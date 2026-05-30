@@ -28,4 +28,4 @@ def call_chess_api(base_fen):
     #print(data["continuationArr"])
     print(data)
 
-# call_chess_api(base_fen='rnbqkbnr/pppppppp/8/8/4P3/8/PPPP1PPP/RNBQKBNR b KQkq e3 0 1')
+call_chess_api(base_fen='rnbqkbnr/pppppppp/8/8/4P3/8/PPPP1PPP/RNBQKBNR b KQkq e3 0 1')

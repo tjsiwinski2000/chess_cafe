@@ -10,10 +10,10 @@
 </head>
 <body>
     
-    TJ Test
-    <p id="demo">A Paragraph.</p>
-    <script src="{% static 'chess_game/js/myScript.js' %}"></script>
-    <button type="button" onclick="myFunction()">Try it</button>
+    <!-- testing below simple JS from static  -->
+    <!-- <p id="demo">A Paragraph.</p> -->
+    <!-- <script src="{% static 'chess_game/js/myScript.js' %}"></script> -->
+    <!-- <button type="button" onclick="myFunction()">Try it</button> -->
     
     <!-- chess testing DMZ -->
     <!-- jQuery (required by chessboard.js) -->
@@ -30,81 +30,98 @@
     <div id="board1" style="width: 400px"></div>
     <button id="startBtn">Start Position</button>
     <button id="clearBtn">Clear Board</button>
-    <button id="get_move">Get Move</button>
+    <input type="checkbox" id="selfplay" name="selfplay" value="selfplay">
+    <label class="chk-box-label">Self-Play</label><br>
+    <div id="difficulty-btns">
+      <button class="diff-btn active" data-level="beginner">Beginner</button>
+      <button class="diff-btn" data-level="intermediate">Intermediate</button>
+      <button class="diff-btn" data-level="advanced">Advanced</button>
+      <button class="diff-btn" data-level="maximum">Maximum</button>
+  </div>
 
     <!-- FEN output section -->
     <p id="fen-output"></p>
 
     <!-- Init -->
     <script>
-        var game = new Chess()
-      
-        function onDrop(source, target) {
+      var game = new Chess()
+  
+      var currentDifficulty = "beginner"; // default
+
+      $('.diff-btn').on('click', function() {
+          $('.diff-btn').removeClass('active');
+          $(this).addClass('active');
+          currentDifficulty = $(this).data('level');
+      });
+
+      function onDrop(source, target) {
           var move = game.move({
-            from: source,
-            to: target,
-            promotion: 'q'
+              from: source,
+              to: target,
+              promotion: 'q'
           })
-      
+  
           if (move === null) return 'snapback'
-      
-          
-        }
-      
-        function onSnapEnd() {
+      }
+  
+      async function onSnapEnd() {
+          //console.log('in onSnapEnd')
           const fen = game.fen();
           board1.position(fen);
           document.getElementById("fen-output").textContent = fen;
-          callChessApi(fen);
+  
+          if (game.game_over()) {
+              document.getElementById("status").textContent = "Game over!";
+              return;
+          }
+  
+          const bestMove = await getBestMove(fen);
+          if (bestMove) {
+              game.move(bestMove, { sloppy: true });
+              board1.position(game.fen());
+              document.getElementById("fen-output").textContent = game.fen();
+          }
+         // 0529-2026 Self-Play option
+         if (document.getElementById('selfplay').checked){
+          onSnapEnd()
+         }
+          
       }
-
-        var board1 = Chessboard('board1', {
+  
+      var board1 = Chessboard('board1', {
           position: 'start',
           draggable: true,
           pieceTheme: 'https://chessboardjs.com/img/chesspieces/wikipedia/{piece}.png',
           onDrop: onDrop,
           onSnapEnd: onSnapEnd
-        })
-      
-        async function sanitizeFen(fen) {
+      })
+  
+      async function sanitizeFen(fen) {
           fen = String(fen)
           const parts = fen.split(" ");
-          parts[3] = "-";  // zero out en passant square
+          parts[3] = "-";
           return parts.join(" ");
       }
-      
-      async function callChessApi(fen) {
+  
+      async function getBestMove(fen) {
           fen = await sanitizeFen(fen);
-          console.log(`Sending FEN: ${fen}`);
-      
-          const response = await fetch("https://chess-api.com/v1", {
+          const response = await fetch("/best-move/", {
               method: "POST",
-              headers: { "Content-Type": "application/json" },
-              body: JSON.stringify({ fen })
+              headers: {
+                  "Content-Type": "application/json",
+                  "X-CSRFToken": document.cookie.split("; ").find(r => r.startsWith("csrftoken="))?.split("=")[1]
+              },
+              body: JSON.stringify({ fen, difficulty: currentDifficulty }) //user selects difficult
           });
-      
-          if (!response.ok) throw new Error(`HTTP error: ${response.status}`);
-      
+          console.log(`difficulty is ${currentDifficulty}`)
           const data = await response.json();
-          console.log(`Best move: ${data.move} | Eval: ${data.eval}`);
-          
-          // Apply the move to chess.js
-          game.move({ from: data.from, to: data.to, promotion: 'q' })
-
-         // Sync the board
-         board1.position(game.fen());
-
-         // Fun idea call API at this point to play against itself.
-        setTimeout(() => {
-        callChessApi(game.fen());
-         }, 400); // slight delay feels more natural -->
-
-          return data;
+          console.log(`move is ${data.best_move}`)
+          return data.best_move; // ✅ fixed
       }
-
-        $('#startBtn').on('click', board1.start)
-        $('#clearBtn').on('click', board1.clear)
-    </script>
+  
+      $('#startBtn').on('click', board1.start)
+      $('#clearBtn').on('click', board1.clear)
+  </script>
     
 </body>
 </html>
