@@ -33,11 +33,17 @@
     <input type="checkbox" id="selfplay" name="selfplay" value="selfplay">
     <label class="chk-box-label">Self-Play</label><br>
     <div id="difficulty-btns">
-      <button class="diff-btn active" data-level="beginner">Beginner</button>
-      <button class="diff-btn" data-level="intermediate">Intermediate</button>
-      <button class="diff-btn" data-level="advanced">Advanced</button>
-      <button class="diff-btn" data-level="maximum">Maximum</button>
-  </div>
+        <button class="diff-btn active" data-level="novice">Novice <small>800</small></button>
+        <button class="diff-btn" data-level="apprentice">Apprentice <small>1000</small></button>
+        <button class="diff-btn" data-level="clubplayer">Club Player <small>1200</small></button>
+        <button class="diff-btn" data-level="contender">Contender <small>1400</small></button>
+        <button class="diff-btn" data-level="rival">Rival <small>1600</small></button>
+        <button class="diff-btn" data-level="expert">Expert <small>1800</small></button>
+        <button class="diff-btn" data-level="master">Master <small>2000</small></button>
+        <button class="diff-btn" data-level="grandmaster">Grandmaster <small>2200</small></button>
+        <button class="diff-btn" data-level="deepblue">Deep Blue <small>2800</small></button>
+        <button class="diff-btn" data-level="stockfish">Stockfish <small>MAX</small></button>
+    </div>
 
     <!-- FEN output section -->
     <p id="fen-output"></p>
@@ -46,7 +52,7 @@
     <script>
       var game = new Chess()
   
-      var currentDifficulty = "beginner"; // default
+      var currentDifficulty = "novice"; // default
 
       $('.diff-btn').on('click', function() {
           $('.diff-btn').removeClass('active');
