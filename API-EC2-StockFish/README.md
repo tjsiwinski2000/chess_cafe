@@ -32,7 +32,7 @@ scp -i your-key.pem app.py ubuntu@your-ec2-public-ip:
 [FROM C:\Users\TJ\source\repos\chess_cafe\0527-2026]
 ✅ scp -i %path.keypair% .\app.py ubuntu@our-ec2-public-ip:~/
 [TJS: Note: :~/ required or false positive]
-
+scp -i .\05282026keypair.pem .\app.py ubuntu@107.20.61.73:~/
 ✅scp -i your-key.pem requirements.txt ubuntu@your-ec2-public-ip:~/
 [TJS: Note: pip install -r requirements.txt]
 

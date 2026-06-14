@@ -3,7 +3,7 @@ import requests
 from django.http import JsonResponse
 from django.views.decorators.http import require_POST
 import json
-STOCKFISH_API_URL = "http://34.230.29.126:8000/best-move"
+STOCKFISH_API_URL = "http://54.89.162.116:8000/best-move"
 STOCKFISH_API_KEY = "your-strong-secret-key"  # or load from env
 
 # Create your views here.

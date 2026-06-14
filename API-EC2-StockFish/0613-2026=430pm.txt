@@ -1,0 +1,48 @@
+#4:30pm 0613-2026 claude recommends this up
+@app.route("/best-move", methods=["POST"])
+@require_api_key
+def best_move():
+    data       = request.get_json()
+    fen        = data.get("fen", "")
+    difficulty = data.get("difficulty", "intermediate")
+
+    sf = get_engine(difficulty)
+
+    if not sf.is_fen_valid(fen):
+        return jsonify({"error": "Invalid FEN"}), 400
+
+    sf.set_fen_position(fen)
+    move = sf.get_best_move()
+
+    return jsonify({"best_move": move})
+	
+435pm File "/home/ubuntu/venv/lib/python3.14/site-packages/stockfish/models.py", line 311, in _validate_param_val
+    raise ValueError(f"{value} is below {name}'s minimum value of {minimum}")
+ValueError: 800 is below UCI_Elo's minimum value of 1320
+The version of Stockfish on your EC2 instance has a minimum Elo of 1320. Your local binary (Stockfish 18) probably accepts 800, but the EC2 one is older.
+
+
+1045pm
+54.198.134.239
+
+scp -i .\05282026keypair.pem .\app.py ubuntu@54.198.134.239:~/
+
+ssh -i .\05282026keypair.pem  ubuntu@54.198.134.239
+
+source venv/bin/activate 
+export STOCKFISH_API_KEY="your-strong-secret-key"
+gunicorn -w 2 -b 0.0.0.0:8000 app:app
+
+updated app.py API with new dictionary [minimum elo 1320]
+DIFFICULTY_SETTINGS = {
+    "novice":       {"UCI_LimitStrength": True, "UCI_Elo": 1320},
+    "apprentice":   {"UCI_LimitStrength": True, "UCI_Elo": 1400},
+    "clubplayer":   {"UCI_LimitStrength": True, "UCI_Elo": 1500},
+    "contender":    {"UCI_LimitStrength": True, "UCI_Elo": 1600},
+    "rival":        {"UCI_LimitStrength": True, "UCI_Elo": 1700},
+    "expert":       {"UCI_LimitStrength": True, "UCI_Elo": 1800},
+    "master":       {"UCI_LimitStrength": True, "UCI_Elo": 2000},
+    "grandmaster":  {"UCI_LimitStrength": True, "UCI_Elo": 2200},
+    "deepblue":     {"UCI_LimitStrength": True, "UCI_Elo": 2800},
+    "stockfish":    {"UCI_LimitStrength": False},
+}

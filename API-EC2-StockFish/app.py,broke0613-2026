@@ -10,11 +10,11 @@ STOCKFISH_PATH = os.environ.get('STOCKFISH_PATH', '/usr/games/stockfish')
 API_KEY = os.environ.get('STOCKFISH_API_KEY', 'changeme')
 
 DIFFICULTY_SETTINGS = {
-    "novice":       {"UCI_LimitStrength": True, "UCI_Elo": 1320},
-    "apprentice":   {"UCI_LimitStrength": True, "UCI_Elo": 1400},
-    "clubplayer":   {"UCI_LimitStrength": True, "UCI_Elo": 1500},
-    "contender":    {"UCI_LimitStrength": True, "UCI_Elo": 1600},
-    "rival":        {"UCI_LimitStrength": True, "UCI_Elo": 1700},
+    "novice":       {"UCI_LimitStrength": True, "UCI_Elo": 800},
+    "apprentice":   {"UCI_LimitStrength": True, "UCI_Elo": 1000},
+    "clubplayer":   {"UCI_LimitStrength": True, "UCI_Elo": 1200},
+    "contender":    {"UCI_LimitStrength": True, "UCI_Elo": 1400},
+    "rival":        {"UCI_LimitStrength": True, "UCI_Elo": 1600},
     "expert":       {"UCI_LimitStrength": True, "UCI_Elo": 1800},
     "master":       {"UCI_LimitStrength": True, "UCI_Elo": 2000},
     "grandmaster":  {"UCI_LimitStrength": True, "UCI_Elo": 2200},
@@ -34,7 +34,7 @@ def require_api_key(f):
 
 # --- Helper ---
 
-def get_engine(difficulty="intermediate", depth=10):
+def get_engine(difficulty="novice", depth=10):
     sf = Stockfish(path=STOCKFISH_PATH, depth=depth)
     sf.update_engine_parameters(DIFFICULTY_SETTINGS.get(difficulty, DIFFICULTY_SETTINGS["novice"]))
     return sf
@@ -50,7 +50,7 @@ def health():
 def best_move():
     data       = request.get_json()
     fen        = data.get("fen", "")
-    difficulty = data.get("difficulty", "intermediate")
+    difficulty = data.get("difficulty", "novice")
 
     sf = get_engine(difficulty)
 
@@ -59,12 +59,11 @@ def best_move():
 
     sf.set_fen_position(fen)
     move       = sf.get_best_move()
-    #evaluation = sf.get_evaluation()
-    #sf.send_quit_command()
+    evaluation = sf.get_evaluation()
+    sf.send_quit_command()
 
-    #return jsonify({"best_move": move, "evaluation": evaluation})
-    return jsonify({"best_move": move})
-    
+    return jsonify({"best_move": move, "evaluation": evaluation})
+
 @app.route("/top-moves", methods=["POST"])
 @require_api_key
 def top_moves():
